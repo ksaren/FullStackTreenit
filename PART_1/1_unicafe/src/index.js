@@ -10,53 +10,117 @@ const Button = ({handleClick, text}) => {
 
 }
 
+const Statistics = ({state, count}) => {
+
+    const positives = () => {
+        if (count === 0) {
+            return (
+                <div>
+                   <em>No ratings yet.</em>
+                </div>
+            )
+        }
+        return (
+            <div>
+                <p>Positive: {(100*state.good/count).toFixed(1)}%</p>
+            </div>
+        )
+    }
+
+    return(
+        <div>
+            <h2>Statistics</h2>
+            <p>Good: {state.good}</p>
+            <p>Sometimes OK: {state.ok}</p>
+            <p>Bad: {state.bad}</p>
+            <p>Mean: {state.mean.toFixed(1)}</p>
+            {positives()}
+        </div>
+    )
+    
+}
+
+const Statistic = ({}) => {
+
+}
+
+const Header = ({title}) => {
+    return(
+    <div>
+        <h1>{title}</h1>
+    </div>
+    )
+}
+
+
+
 class App extends React.Component {
     constructor() {
         super()
         this.state = {
-            Good: 0,
-            OK: 0,
-            Bad: 0,
+            title: 'How did the food taste like? Give your feedback!',
+            good: 0,
+            ok: 0,
+            bad: 0,
+            num_stats: [],
+            mean: 0
         }
 
     }
+
+    countMean = () => this.state.num_stats.reduce((prev,next) => prev + next, 0)/this.state.num_stats.length
+    
         
-
-    addGood = () => () => this.setState({Good: this.state.Good + 1})
-    addOK = () => () => this.setState({OK: this.state.OK + 1})
-    addBad = () => () => this.setState({Bad: this.state.Bad + 1})
-
+    addGood = () => () => {
+        const m = this.countMean()
+        this.setState({
+            good: this.state.good + 1,
+            num_stats: this.state.num_stats.concat(1),
+            mean: m
+        })
+    } 
+    addOK = () => () => {
+        const m = this.countMean()
+        this.setState({
+            ok: this.state.ok + 1,
+            num_stats: this.state.num_stats.concat(0),
+            mean: m
+        })
+    }
+    addBad = () => () => {
+        const m = this.countMean()
+        this.setState({
+            bad: this.state.bad + 1,
+            num_stats: this.state.num_stats.concat(-1),
+            mean: m
+        })
+    }       
     
     render() {
         return(
             <div>
-                <h1>How did the food taste like? Give your feedback!</h1>
-
+                <Header title={this.state.title}/>
                 <div>
                     <Button
-                    handleClick = {this.addGood()}
-                    text = 'Good' 
+                        handleClick = {this.addGood()}
+                        text = 'Good' 
                     />
                     <Button
-                    handleClick = {this.addOK()}
-                    text = 'OK' 
+                        handleClick = {this.addOK()}
+                        text = 'OK, sometimes' 
                     />
                     <Button
-                    handleClick = {this.addBad()}
-                    text = 'Bad' 
+                        handleClick = {this.addBad()}
+                        text = 'Bad' 
                     />
                 </div>
 
-                <h2>Statistics</h2>
-                <div>
-                    <p>Good: {this.state.Good}</p>
-                    <p>OK: {this.state.OK}</p>
-                    <p>Bad: {this.state.Bad}</p>
-                </div>
+                <Statistics 
+                    state={this.state}
+                    count={this.state.num_stats.length}
+                />
             </div>
-
         )
-
     }
 }
 
