@@ -10,38 +10,38 @@ const Button = ({handleClick, text}) => {
 
 }
 
-const Statistics = ({state, count}) => {
-
-    const positives = () => {
-        if (count === 0) {
-            return (
-                <div>
-                   <em>No ratings yet.</em>
-                </div>
-            )
-        }
+const Statistics = ({state, mean}) => {
+    const count = state.num_stats.length
+    const positives = () => <em>{(100*state.good.value/count).toFixed(1)}%</em>   
+    if (count === 0) {
         return (
             <div>
-                <p>Positive: {(100*state.good/count).toFixed(1)}%</p>
+                <h2>Statistics</h2>
+                <em>No ratings yet.</em>
             </div>
         )
-    }
-
-    return(
-        <div>
-            <h2>Statistics</h2>
-            <p>Good: {state.good}</p>
-            <p>Sometimes OK: {state.ok}</p>
-            <p>Bad: {state.bad}</p>
-            <p>Mean: {state.mean.toFixed(1)}</p>
-            {positives()}
-        </div>
-    )
-    
+    } else {
+        return(
+            <div>
+                <h2>Statistics</h2>
+                <table>
+                    <Statistic data={state.good} />
+                    <Statistic data={state.ok} />
+                    <Statistic data={state.bad} />
+                    <Statistic data={{text: 'Mean', value: mean.toFixed(1)}} />
+                    <Statistic data={{text: 'Positives', value: positives()}} />
+                </table>           
+            </div>
+        )
+    }     
 }
 
-const Statistic = ({}) => {
-
+const Statistic = ({data}) => {
+    return (
+        <tbody>
+            <tr><td>{data.text}</td><td>{data.value}</td></tr>
+        </tbody>
+    )
 }
 
 const Header = ({title}) => {
@@ -55,69 +55,55 @@ const Header = ({title}) => {
 
 
 class App extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.state = {
-            title: 'How did the food taste like? Give your feedback!',
-            good: 0,
-            ok: 0,
-            bad: 0,
+            title: 'How the food tasted? Give your feedback!',
+            good: {text: 'Good', value: 0, num:1},
+            ok: {text: 'OK', value: 0, num: 0},
+            bad: {text: 'Bad', value: 0, num: -1},
             num_stats: [],
-            mean: 0
         }
 
     }
 
-    countMean = () => this.state.num_stats.reduce((prev,next) => prev + next, 0)/this.state.num_stats.length
-    
         
-    addGood = () => () => {
-        const m = this.countMean()
+    addRate = (rate) => () => {
+        //console.log(rate)
         this.setState({
-            good: this.state.good + 1,
-            num_stats: this.state.num_stats.concat(1),
-            mean: m
+            [rate.text.toLowerCase()]: {text: rate.text, value: rate.value + 1, num:rate.num},
+            num_stats: this.state.num_stats.concat(rate.num),
         })
     } 
-    addOK = () => () => {
-        const m = this.countMean()
-        this.setState({
-            ok: this.state.ok + 1,
-            num_stats: this.state.num_stats.concat(0),
-            mean: m
-        })
-    }
-    addBad = () => () => {
-        const m = this.countMean()
-        this.setState({
-            bad: this.state.bad + 1,
-            num_stats: this.state.num_stats.concat(-1),
-            mean: m
-        })
-    }       
-    
+        
     render() {
+        const countMean = () => {
+            return (
+                (this.state.num_stats.reduce((prev,next) => prev + next, 0)/this.state.num_stats.length)
+            )
+        }
+
         return(
             <div>
                 <Header title={this.state.title}/>
                 <div>
                     <Button
-                        handleClick = {this.addGood()}
-                        text = 'Good' 
+                        handleClick = {this.addRate(this.state.good)}
+                        text = {this.state.good.text}
                     />
                     <Button
-                        handleClick = {this.addOK()}
-                        text = 'OK, sometimes' 
+                        handleClick = {this.addRate(this.state.ok)}
+                        text = {this.state.ok.text}
                     />
                     <Button
-                        handleClick = {this.addBad()}
-                        text = 'Bad' 
+                        handleClick = {this.addRate(this.state.bad)} 
+                        text = {this.state.bad.text}
                     />
                 </div>
 
                 <Statistics 
+                    mean = {countMean()}
                     state={this.state}
-                    count={this.state.num_stats.length}
                 />
             </div>
         )
