@@ -1,15 +1,26 @@
 import React from 'react'
 import Note from './components/Note'
+import axios from 'axios'
 
 class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      notes: props.notes,
+      notes: [],
       newNote: 'uusi muistiinpano...',
       showAll: true,
     }
+    console.log('constructor')
   } 
+  componentDidMount() {
+    console.log('will mount')
+    axios
+      .get('http://localhost:3001/notes')
+      .then(response => {
+        console.log('promise fulfilled')
+        this.setState({ notes: response.data })
+      })
+  }
 addNote = (event) => {
   event.preventDefault()
   const noteObject = {
@@ -35,7 +46,7 @@ toggleVisible = () => {
 }
 
   render() {
-
+    console.log('rendering...')
     const notesToShow =
       this.state.showAll ?
         this.state.notes:
