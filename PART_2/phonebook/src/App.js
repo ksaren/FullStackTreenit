@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react'
+import axios from 'axios'
 import Person from './components/Person'
 import Filter from './components/Filter'
 import ContactForm from './components/ContactForm'
@@ -7,11 +8,21 @@ class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      persons: props.persons,
+      persons: [],
       newName: '',
       newNumber: '',
       showThese: ''
     }
+  }
+
+  componentDidMount() {
+    console.log('managed to mount')
+    axios
+    .get('http://localhost:3001/persons')
+    .then(response => {
+      console.log('promise fulfilled')
+      this.setState({ persons: response.data })
+    })
   }
 
   addPerson = (event) => {
