@@ -1,8 +1,11 @@
 import React from 'react'
-import axios from 'axios'
 import Person from './components/Person'
 import Filter from './components/Filter'
+import Notification from './components/Notification'
+import Error from './components/Error'
 import ContactForm from './components/ContactForm'
+import personService from './services/persons'
+import './index.css'
 
 class App extends React.Component {
   constructor(props) {
@@ -11,17 +14,16 @@ class App extends React.Component {
       persons: [],
       newName: '',
       newNumber: '',
-      showThese: ''
+      showThese: '',
+      message: null,
+      error: null
     }
   }
-
+  
   componentDidMount() {
-    console.log('managed to mount')
-    axios
-    .get('http://localhost:3001/persons')
-    .then(response => {
-      console.log('promise fulfilled')
-      this.setState({ persons: response.data })
+    personService.getAll()
+    .then(persons => {
+      this.setState({ persons })
     })
   }
 
@@ -29,20 +31,98 @@ class App extends React.Component {
     event.preventDefault()
     const personObject = {
       name: this.state.newName,
-      number: this.state.newNumber,
-      id: this.state.persons.length + 1,
+      number: this.state.newNumber
     }
+    if(this.state.persons.some(p => p.name===personObject.name)) {
+      if(window.confirm('' + personObject.name +' is already in phonebook. Update number?')) {
+        const id = this.state.persons.find(p => p.name===personObject.name).id
+        const changedPerson = { ...personObject, number: this.state.newNumber}
 
-    const persons = this.state.persons.some(p => p.name===personObject.name) ?
-    this.state.persons:
-    this.state.persons.concat(personObject)
+        personService.update(id, changedPerson)
+        .then(changedPerson => {
+          const persons = this.state.persons.filter(p => p.id != id)
+          this.setState({
+          persons: persons.concat(changedPerson),
+          newName: '',
+          newNumber: '',
+          message: changedPerson.name+' succesfully updated!'
+          })
+          setTimeout(() => {
+            this.setState({message: null})
+          }, 5000)
+        }) //then end   
+        .catch(error => {
+          const persons = this.state.persons.filter(p => p.id != id)
+          this.setState({ 
+            persons,
+            error: 'Item is recently removed from phone book. Try again to add person!',
+            })
+          setTimeout(() => {
+            this.setState({error: null})
+          }, 5000)
+        })            
+      } else {
+        this.setState({
+          newName: '',
+          newNumber: ''
+          })
+      }
 
-    this.setState({
-      persons,
-      newName: '',
-      newNumber: ''
-    })
+    } else {
+      personService.create(personObject)
+      .then(person => {
+       // const persons = this.state.persons.some(p => p.name===personObject.name) ?
+       // this.state.persons:
+        const persons = this.state.persons.concat(person)
+    
+        this.setState({
+          persons,
+          newName: '',
+          newNumber: '',
+          message: person.name+' succesfully added to phone book!'
+        })
+        setTimeout(() => {
+          this.setState({message: null})
+        }, 5000)
+        })
+      }
+    }      
+  
+
+  removePerson = (event) => {
+    event.preventDefault()
+    const id = event.target.id
+    const person = this.state.persons.find(p => p.id==id)
+    if(window.confirm('Confirm removing '+person.name+'?')) {
+      personService.remove(id)
+      .then(p => {
+        //Ao. ei toimi jos !==, selvitä miksei...
+        const remainderPersons = this.state.persons.filter(p => p.id != id)
+        console.log('Then:',remainderPersons)
+        this.setState({ 
+          persons: remainderPersons,
+          message: person.name+' succesfully removed from phone book!'
+          })
+        setTimeout(() => {
+          this.setState({message: null})
+        }, 5000)
+      })
+      .catch(error => {
+        personService.getAll()
+          .then(persons => {
+            this.setState({ 
+              persons, 
+              error: 'Item is already removed from phone book.'
+            })
+          })
+  
+        setTimeout(() => {
+          this.setState({error: null})
+        }, 5000)
+      })
+    }
   }
+  
 
   handleNameChange = (event) => {
     this.setState({newName: event.target.value})
@@ -70,6 +150,9 @@ class App extends React.Component {
 
     return (
       <div>
+        <Notification message={this.state.message} />
+        <Error message={this.state.error} />
+
         <h1>Phone Book</h1>
 
         <Filter 
@@ -84,9 +167,17 @@ class App extends React.Component {
           numberValue={this.state.newNumber}
         />
         <h2>Numbers:</h2>
-        <ul>
-          {personsToShow.map(p => <Person key={p.id} person={p}/>)}
-        </ul>     
+        <table>
+          <tbody>
+          {personsToShow.map(p => 
+            <Person 
+              key={p.id}
+              person={p}
+              buttonHandler={this.removePerson}
+            />
+          )}
+          </tbody>
+        </table>     
       </div>
     )
   }

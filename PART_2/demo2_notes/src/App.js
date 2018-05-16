@@ -1,6 +1,8 @@
 import React from 'react'
 import Note from './components/Note'
+import Notification from './components/Notification'
 import axios from 'axios'
+import noteService from './services/notes'
 
 class App extends React.Component {
   constructor(props) {
@@ -9,16 +11,14 @@ class App extends React.Component {
       notes: [],
       newNote: 'uusi muistiinpano...',
       showAll: true,
+      error: null
     }
     console.log('constructor')
   } 
   componentDidMount() {
-    console.log('will mount')
-    axios
-      .get('http://localhost:3001/notes')
-      .then(response => {
-        console.log('promise fulfilled')
-        this.setState({ notes: response.data })
+    noteService.getAll()
+      .then(notes => {
+        this.setState({notes})
       })
   }
 addNote = (event) => {
@@ -26,14 +26,15 @@ addNote = (event) => {
   const noteObject = {
     content: this.state.newNote,
     date: new Date().new,
-    important: Math.random() > 0.5,
-    id: this.state.notes.length + 1
+    important: Math.random() > 0.5
   }
-  const notes = this.state.notes.concat(noteObject)
-  this.setState({
-    notes,
-    newNote: ''
-  })
+  noteService.create(noteObject)
+    .then(newNote =>
+      this.setState({
+        notes: this.state.notes.concat(newNote),
+        newNote: ''
+      })
+    )  
 }
 
 handleNoteChange = (event) =>{
@@ -43,6 +44,30 @@ handleNoteChange = (event) =>{
 
 toggleVisible = () => {
   this.setState({showAll: !this.state.showAll})
+}
+
+toggleImportanceOf = (id) => {
+  return () => {
+    const note = this.state.notes.find(n => n.id === id)
+    const changedNote = { ...note, important: !note.important }
+
+    noteService.update(id, changedNote)
+      .then(changedNote => {
+        const notes = this.state.notes.filter(n => n.id !== id)
+        this.setState({
+          notes: notes.concat(changedNote)
+        })
+      })
+      .catch(error => {
+        this.setState({ 
+          notes: this.state.notes.filter(n => n.id !== id),
+          error: `Note '${note.content}' has already removed from server.` 
+        })
+        setTimeout(() => {
+          this.setState({error: null})
+        }, 5000)
+      })      
+  }
 }
 
   render() {
@@ -58,13 +83,20 @@ toggleVisible = () => {
     return (
       <div>
         <h1>Notes</h1>
+        <Notification message={this.state.error} />
         <div>
           <button onClick={this.toggleVisible}>
           {label}
           </button>
         </div>
         <ul>
-          {notesToShow.map(note => <Note key={note.id} text={note.content}/>)}
+          {notesToShow.map(note =>
+             <Note
+               key={note.id} 
+               note={note}
+               toggleImportance={this.toggleImportanceOf(note.id)}
+              />
+          )}
         </ul>
         <form onSubmit={this.addNote}>
           <input 
