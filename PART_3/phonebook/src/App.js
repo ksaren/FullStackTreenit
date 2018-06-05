@@ -40,7 +40,7 @@ class App extends React.Component {
 
         personService.update(id, changedPerson)
         .then(changedPerson => {
-          const persons = this.state.persons.filter(p => Number(p.id) !== Number(id))
+          const persons = this.state.persons.filter(p => p.id.toString() !== id.toString())
           this.setState({
           persons: persons.concat(changedPerson),
           newName: '',
@@ -52,7 +52,7 @@ class App extends React.Component {
           }, 5000)
         }) //then end   
         .catch(error => {
-          const persons = this.state.persons.filter(p => Number(p.id) !== Number(id))
+          const persons = this.state.persons.filter(p => p.id.toString() !== id.toString())
           this.setState({ 
             persons,
             error: 'Item is recently removed from phone book. Try again to add person!',
@@ -92,12 +92,12 @@ class App extends React.Component {
   removePerson = (event) => {
     event.preventDefault()
     const id = event.target.id
-    const person = this.state.persons.find(p => Number(p.id)===Number(id))
+    const person = this.state.persons.find(p => p.id.toString()===id.toString())
     if(window.confirm('Confirm removing '+person.name+'?')) {
       personService.remove(id)
       .then(p => {
         //Ao. ei toimi jos !==, selvitä miksei...
-        const remainderPersons = this.state.persons.filter(p => Number(p.id) !== Number(id))
+        const remainderPersons = this.state.persons.filter(p => p.id.toString() !== id.toString())
         console.log('Then:',remainderPersons)
         this.setState({ 
           persons: remainderPersons,

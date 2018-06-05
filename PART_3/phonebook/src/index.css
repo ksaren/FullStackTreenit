@@ -1,0 +1,36 @@
+body {
+    background-color: beige;
+}
+h1 {
+    color: royalblue
+}
+
+h2 {
+    color: blue
+}
+
+  .contact {
+    color: darkcyan;
+    padding-top: 5px;
+    font-size: 15px;
+  }
+
+  .success {
+    color: green;
+    background: lightgreen;
+    font-size: 20px;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .error {
+    color: darkred;
+    background: coral;
+    font-size: 20px;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
